@@ -1,3 +1,9 @@
+'''
+A simple Python3 tool to detect similarities between files within a repository.
+
+Document similarity code adapted from Jonathan Mugan's tutorial:
+https://www.oreilly.com/learning/how-do-i-compare-document-similarity-using-python
+'''
 import os
 import sys
 import argparse
@@ -38,7 +44,7 @@ def main():
     source_code_files = list()
     if args.directory:
         if not os.path.isdir(args.directory):
-            print("Repository does not exist or is not a directory:", args.directory)
+            print("Path does not exist or is not a directory:", args.directory)
             sys.exit(1)
         # Get a list with all the source code files within the directory
         for dirpath, _, filenames in os.walk(args.directory):
@@ -80,7 +86,8 @@ def main():
         query_doc_bow = dictionary.doc2bow(query_doc)
         query_doc_tf_idf = tf_idf[query_doc_bow]
 
-        print("\n\n\n" + CliColors.HEADER + "Similarities for " + source_file + CliColors.ENDC)
+        print("\n\n\n" + CliColors.HEADER +
+              "Code duplication probability for " + source_file + CliColors.ENDC)
         print("-" * (largest_string_length + similarity_label_length))
         print(CliColors.BOLD + "%s %s" %
               (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC)
