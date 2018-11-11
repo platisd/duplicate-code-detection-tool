@@ -1,0 +1,6 @@
+# Ignore everything
+*
+# Except the following:
+!.gitignore
+!duplicate_code_detection.py
+!README.md
