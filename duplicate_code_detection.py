@@ -98,7 +98,7 @@ def main():
             if source == source_file:
                 continue
             similarity_percentage = similarity * 100
-            color = CliColors.OKGREEN if similarity_percentage < 10.0 else (
+            color = CliColors.OKGREEN if similarity_percentage < 10 else (
                 CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
             print("%s     " % (source.ljust(largest_string_length)) +
                   color + "%.2f" % (similarity_percentage) + CliColors.ENDC)
