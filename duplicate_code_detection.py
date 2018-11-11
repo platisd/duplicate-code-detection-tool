@@ -6,8 +6,12 @@ from nltk.tokenize import word_tokenize
 from collections import OrderedDict
 
 source_code_file_extensions = [".c", ".cpp", ".cc", ".java", ".py", ".cs"]
+file_column_label = "File"
+similarity_column_label = "Similarity (%)"
+similarity_label_length = len(similarity_column_label)
 
-class bcolors:
+
+class CliColors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -19,7 +23,8 @@ class bcolors:
 
 
 def main():
-    parser_description = "=== Duplicate Code Detection Tool ==="
+    parser_description = CliColors.HEADER + CliColors.BOLD + \
+        "=== Duplicate Code Detection Tool ===" + CliColors.ENDC
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument("-p", "--path",
                         help="Relative path to repo to check for duplicates",
@@ -53,7 +58,7 @@ def main():
     dictionary = gensim.corpora.Dictionary(gen_docs)
     corpus = [dictionary.doc2bow(gen_doc) for gen_doc in gen_docs]
     tf_idf = gensim.models.TfidfModel(corpus)
-    sims = gensim.similarities.Similarity('.',tf_idf[corpus],
+    sims = gensim.similarities.Similarity('.', tf_idf[corpus],
                                           num_features=len(dictionary))
 
     for source_file in source_code:
@@ -62,18 +67,22 @@ def main():
         query_doc_bow = dictionary.doc2bow(query_doc)
         query_doc_tf_idf = tf_idf[query_doc_bow]
 
-        print("\n\n\n" + bcolors.HEADER + "Similarities for " + source_file + bcolors.ENDC)
-        print("-" * (largest_string_length + 14))
-        print(bcolors.BOLD + "%s %s" % ("File".center(largest_string_length), "Similarity (%)") + bcolors.ENDC)
-        print("-" * (largest_string_length + 14))
+        print("\n\n\n" + CliColors.HEADER + "Similarities for " + source_file + CliColors.ENDC)
+        print("-" * (largest_string_length + similarity_label_length))
+        print(CliColors.BOLD + "%s %s" %
+              (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC)
+        print("-" * (largest_string_length + similarity_label_length))
 
         for similarity, source in zip(sims[query_doc_tf_idf], source_code):
             # Ignore similarities for the same file
             if source == source_file:
                 continue
             similarity_percentage = similarity * 100
-            color = bcolors.OKGREEN if similarity_percentage < 10.0 else (bcolors.WARNING if similarity_percentage < 20 else bcolors.FAIL)
-            print ("%s     " % (source.ljust(largest_string_length)) + color + "%.2f" % (similarity_percentage) + bcolors.ENDC)
+            color = CliColors.OKGREEN if similarity_percentage < 10.0 else (
+                CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
+            print("%s     " % (source.ljust(largest_string_length)) +
+                  color + "%.2f" % (similarity_percentage) + CliColors.ENDC)
+
 
 if __name__ == "__main__":
     main()
