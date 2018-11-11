@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import gensim
+import tempfile
 from nltk.tokenize import word_tokenize
 from collections import OrderedDict
 
@@ -26,31 +27,42 @@ def main():
     parser_description = CliColors.HEADER + CliColors.BOLD + \
         "=== Duplicate Code Detection Tool ===" + CliColors.ENDC
     parser = argparse.ArgumentParser(description=parser_description)
-    parser.add_argument("-p", "--path",
-                        help="Relative path to repo to check for duplicates",
-                        required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-d", "--directory",
+                       help="Check for similarities between all files of the specified directory.")
+    group.add_argument('-f', "--files", nargs="+", help="Check for similarities between specified files. \
+                        The more files are supplied the more accurate are the results.")
     args = parser.parse_args()
 
-    if not os.path.isdir(args.path):
-        print("Repository does not exist or is not a directory:", args.path)
-        sys.exit(1)
-
-    # Get a list with all the source code files within the repository
+    # Determine which files to compare for similarities
     source_code_files = list()
-    for dirpath, _, filenames in os.walk(args.path):
-        for name in filenames:
-            _, file_extension = os.path.splitext(name)
-            if file_extension in source_code_file_extensions:
-                filename = os.path.join(dirpath, name)
-                source_code_files.append(filename)
-    largest_string_length = len(max(source_code_files, key=len))
+    if args.directory:
+        if not os.path.isdir(args.directory):
+            print("Repository does not exist or is not a directory:", args.directory)
+            sys.exit(1)
+        # Get a list with all the source code files within the directory
+        for dirpath, _, filenames in os.walk(args.directory):
+            for name in filenames:
+                _, file_extension = os.path.splitext(name)
+                if file_extension in source_code_file_extensions:
+                    filename = os.path.join(dirpath, name)
+                    source_code_files.append(filename)
+    else:
+        if len(args.files) < 2:
+            print("Too few files to compare, you need to supply at least 2")
+            sys.exit(1)
+        for supplied_file in args.files:
+            if not os.path.isfile(supplied_file):
+                print("Supplied file does not exist:", supplied_file)
+                sys.exit(1)
+        source_code_files = args.files
 
     # Parse the contents of all the source files
     source_code = OrderedDict()
-    for source_code_file_path in source_code_files:
-        with open(source_code_file_path, 'r') as f:
+    for source_code_file in source_code_files:
+        with open(source_code_file, 'r') as f:
             # Store source code with the file path as the key
-            source_code[source_code_file_path] = f.read()
+            source_code[source_code_file] = f.read()
 
     # Create a Similarity object of all the source code
     gen_docs = [[word.lower() for word in word_tokenize(source_code[source_file])]
@@ -58,9 +70,10 @@ def main():
     dictionary = gensim.corpora.Dictionary(gen_docs)
     corpus = [dictionary.doc2bow(gen_doc) for gen_doc in gen_docs]
     tf_idf = gensim.models.TfidfModel(corpus)
-    sims = gensim.similarities.Similarity('.', tf_idf[corpus],
+    sims = gensim.similarities.Similarity(tempfile.gettempdir() + os.sep, tf_idf[corpus],
                                           num_features=len(dictionary))
 
+    largest_string_length = len(max(source_code_files, key=len))
     for source_file in source_code:
         # Check for similarities
         query_doc = [w.lower() for w in word_tokenize(source_code[source_file])]
