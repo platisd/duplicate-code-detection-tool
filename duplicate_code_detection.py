@@ -35,6 +35,7 @@ def main():
         "=== Duplicate Code Detection Tool ===" + CliColors.ENDC
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument("-t", "--threshold", type=int, help="Threshold at which the code duplication fails.")
+    parser.add_argument("-i", "--ignore", help="Subdirectory name to ignore.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-d", "--directory",
                        help="Check for similarities between all files of the specified directory.")
@@ -54,7 +55,8 @@ def main():
                 _, file_extension = os.path.splitext(name)
                 if file_extension in source_code_file_extensions:
                     filename = os.path.join(dirpath, name)
-                    source_code_files.append(filename)
+                    if not args.ignore or f"/{args.ignore}/" not in filename:
+                        source_code_files.append(filename)
     else:
         if len(args.files) < 2:
             print("Too few files to compare, you need to supply at least 2")
