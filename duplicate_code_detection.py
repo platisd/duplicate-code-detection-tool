@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 import gensim
+import logging
 import tempfile
 from nltk.tokenize import word_tokenize
 from collections import OrderedDict
@@ -33,6 +34,7 @@ def main():
     parser_description = CliColors.HEADER + CliColors.BOLD + \
         "=== Duplicate Code Detection Tool ===" + CliColors.ENDC
     parser = argparse.ArgumentParser(description=parser_description)
+    parser.add_argument("-t", "--threshold", type=int, help="Threshold at which the code duplication fails.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-d", "--directory",
                        help="Check for similarities between all files of the specified directory.")
@@ -80,6 +82,7 @@ def main():
                                           num_features=len(dictionary))
 
     largest_string_length = len(max(source_code_files, key=len))
+    exit_code = 0
     for source_file in source_code:
         # Check for similarities
         query_doc = [w.lower() for w in word_tokenize(source_code[source_file])]
@@ -98,11 +101,17 @@ def main():
             if source == source_file:
                 continue
             similarity_percentage = similarity * 100
+            if similarity_percentage > args.threshold:
+                exit_code = 1
             color = CliColors.OKGREEN if similarity_percentage < 10 else (
                 CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
             print("%s     " % (source.ljust(largest_string_length)) +
                   color + "%.2f" % (similarity_percentage) + CliColors.ENDC)
-
+    if exit_code == 1: 
+        logging.error(
+            "Code duplication threshold exceeded. Please consult logs."
+        )
+    exit(exit_code)
 
 if __name__ == "__main__":
     main()
