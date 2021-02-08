@@ -30,34 +30,47 @@ class CliColors:
     UNDERLINE = '\033[4m'
 
 
+def get_all_source_code_from_directory(directory):
+    """ Get a list with all the source code files within the directory
+    """
+    source_code_files = list()
+    for dirpath, _, filenames in os.walk(directory):
+        for name in filenames:
+            _, file_extension = os.path.splitext(name)
+            if file_extension in source_code_file_extensions:
+                filename = os.path.join(dirpath, name)
+                source_code_files.append(filename)
+
+    return source_code_files
+
+
+
 def main():
     parser_description = CliColors.HEADER + CliColors.BOLD + \
         "=== Duplicate Code Detection Tool ===" + CliColors.ENDC
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument("-t", "--threshold", type=int, default=100,
                         help="The maximum allowed similarity before the script exits with an error.")
-    parser.add_argument("-i", "--ignore", help="Subdirectory name to ignore.")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-d", "--directory",
-                       help="Check for similarities between all files of the specified directory.")
+    group.add_argument("-d", "--directories", nargs="+",
+                       help="Check for similarities between all files of the specified directories.")
     group.add_argument('-f', "--files", nargs="+", help="Check for similarities between specified files. \
                         The more files are supplied the more accurate are the results.")
+    parser.add_argument("--ignore-directories", nargs="+", help="Directories to ignore.")
+    parser.add_argument("--ignore-files", nargs="+", help="Files to ignore.")
     args = parser.parse_args()
 
     # Determine which files to compare for similarities
     source_code_files = list()
-    if args.directory:
-        if not os.path.isdir(args.directory):
-            print("Path does not exist or is not a directory:", args.directory)
-            sys.exit(1)
-        # Get a list with all the source code files within the directory
-        for dirpath, _, filenames in os.walk(args.directory):
-            for name in filenames:
-                _, file_extension = os.path.splitext(name)
-                if file_extension in source_code_file_extensions:
-                    filename = os.path.join(dirpath, name)
-                    if not args.ignore or f"/{args.ignore}/" not in filename:
-                        source_code_files.append(filename)
+    files_to_ignore = list()
+    if args.directories:
+        for directory in args.directories:
+            if not os.path.isdir(directory):
+                print("Path does not exist or is not a directory:", directory)
+                sys.exit(1)
+            source_code_files += get_all_source_code_from_directory(directory)
+        for directory in args.ignore_directories:
+            files_to_ignore += get_all_source_code_from_directory(directory)
     else:
         if len(args.files) < 2:
             print("Too few files to compare, you need to supply at least 2")
@@ -67,6 +80,9 @@ def main():
                 print("Supplied file does not exist:", supplied_file)
                 sys.exit(1)
         source_code_files = args.files
+
+    files_to_ignore += args.ignore_files if args.ignore_files else list()
+    source_code_files = list(set(source_code_files) - set(files_to_ignore))
 
     # Parse the contents of all the source files
     source_code = OrderedDict()
