@@ -34,7 +34,8 @@ def main():
     parser_description = CliColors.HEADER + CliColors.BOLD + \
         "=== Duplicate Code Detection Tool ===" + CliColors.ENDC
     parser = argparse.ArgumentParser(description=parser_description)
-    parser.add_argument("-t", "--threshold", type=int, help="Threshold at which the code duplication fails.")
+    parser.add_argument("-t", "--threshold", type=int, default=100,
+                        help="The maximum allowed similarity before the script exits with an error.")
     parser.add_argument("-i", "--ignore", help="Subdirectory name to ignore.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-d", "--directory",
