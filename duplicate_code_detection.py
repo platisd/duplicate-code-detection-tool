@@ -8,8 +8,8 @@ import os
 import sys
 import argparse
 import gensim
-import logging
 import tempfile
+import json
 from nltk.tokenize import word_tokenize
 from collections import OrderedDict
 
@@ -44,6 +44,10 @@ def get_all_source_code_from_directory(directory):
     return source_code_files
 
 
+def conditional_print(text, machine_friendly_output):
+    if not machine_friendly_output:
+        print(text)
+
 
 def main():
     parser_description = CliColors.HEADER + CliColors.BOLD + \
@@ -58,6 +62,7 @@ def main():
                         The more files are supplied the more accurate are the results.")
     parser.add_argument("--ignore-directories", nargs="+", help="Directories to ignore.")
     parser.add_argument("--ignore-files", nargs="+", help="Files to ignore.")
+    parser.add_argument("-j", "--json", type=bool, default=False, help="Print output as JSON.")
     args = parser.parse_args()
 
     # Determine which files to compare for similarities
@@ -102,34 +107,38 @@ def main():
 
     largest_string_length = len(max(source_code_files, key=len))
     exit_code = 0
+    code_similarity = dict()
     for source_file in source_code:
         # Check for similarities
         query_doc = [w.lower() for w in word_tokenize(source_code[source_file])]
         query_doc_bow = dictionary.doc2bow(query_doc)
         query_doc_tf_idf = tf_idf[query_doc_bow]
 
-        print("\n\n\n" + CliColors.HEADER +
-              "Code duplication probability for " + source_file + CliColors.ENDC)
-        print("-" * (largest_string_length + similarity_label_length))
-        print(CliColors.BOLD + "%s %s" %
-              (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC)
-        print("-" * (largest_string_length + similarity_label_length))
+        conditional_print("\n\n\n" + CliColors.HEADER +
+              "Code duplication probability for " + source_file + CliColors.ENDC, args.json)
+        conditional_print("-" * (largest_string_length + similarity_label_length), args.json)
+        conditional_print(CliColors.BOLD + "%s %s" %
+              (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC, args.json)
+        conditional_print("-" * (largest_string_length + similarity_label_length), args.json)
 
+        code_similarity[source_file] = dict()
         for similarity, source in zip(sims[query_doc_tf_idf], source_code):
             # Ignore similarities for the same file
             if source == source_file:
                 continue
             similarity_percentage = similarity * 100
+            code_similarity[source_file][source] = round(similarity_percentage, 2)
             if similarity_percentage > args.threshold:
                 exit_code = 1
             color = CliColors.OKGREEN if similarity_percentage < 10 else (
                 CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
-            print("%s     " % (source.ljust(largest_string_length)) +
-                  color + "%.2f" % (similarity_percentage) + CliColors.ENDC)
+            conditional_print("%s     " % (source.ljust(largest_string_length)) +
+                  color + "%.2f" % (similarity_percentage) + CliColors.ENDC, args.json)
     if exit_code == 1: 
-        logging.error(
-            "Code duplication threshold exceeded. Please consult logs."
-        )
+        conditional_print("Code duplication threshold exceeded. Please consult logs.", args.json)
+    if args.json:
+        similarities_json = json.dumps(code_similarity, indent=4)
+        print(similarities_json)
     exit(exit_code)
 
 if __name__ == "__main__":
