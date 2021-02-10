@@ -71,28 +71,34 @@ def main():
         help="Don't print out similarity below the ignore threshold")
     args = parser.parse_args()
 
+    run(args.fail_threshold, args.directories, args.files, args.ignore_directories,
+        args.ignore_files, args.json, args.project_root_dir, args.file_extensions,
+        args.ignore_threshold)
+
+def run(fail_threshold, directories, files, ignore_directories, ignore_files,
+        json_output, project_root_dir, file_extensions, ignore_threshold):
     # Determine which files to compare for similarities
     source_code_files = list()
     files_to_ignore = list()
-    if args.directories:
-        for directory in args.directories:
+    if directories:
+        for directory in directories:
             if not os.path.isdir(directory):
                 print("Path does not exist or is not a directory:", directory)
                 sys.exit(1)
-            source_code_files += get_all_source_code_from_directory(directory, args.file_extensions)
-        for directory in args.ignore_directories:
-            files_to_ignore += get_all_source_code_from_directory(directory, args.file_extensions)
+            source_code_files += get_all_source_code_from_directory(directory, file_extensions)
+        for directory in ignore_directories:
+            files_to_ignore += get_all_source_code_from_directory(directory, file_extensions)
     else:
-        if len(args.files) < 2:
+        if len(files) < 2:
             print("Too few files to compare, you need to supply at least 2")
             sys.exit(1)
-        for supplied_file in args.files:
+        for supplied_file in files:
             if not os.path.isfile(supplied_file):
                 print("Supplied file does not exist:", supplied_file)
                 sys.exit(1)
-        source_code_files = args.files
+        source_code_files = files
 
-    files_to_ignore += args.ignore_files if args.ignore_files else list()
+    files_to_ignore += ignore_files if ignore_files else list()
     source_code_files = list(set(source_code_files) - set(files_to_ignore))
     if len(source_code_files) < 2:
         print("Not enough source code files found")
@@ -100,11 +106,11 @@ def main():
 
     # Get the project root directory path to remove when printing out the results
     project_root_index = 0
-    if args.project_root_dir:
-        if not os.path.isdir(args.project_root_dir):
-            print("The project root directory does not exist or is not a directory:", args.project_root_dir)
+    if project_root_dir:
+        if not os.path.isdir(project_root_dir):
+            print("The project root directory does not exist or is not a directory:", project_root_dir)
             sys.exit(1)
-        project_root_index = len(os.path.abspath(args.project_root_dir)) + 1  # Remove the first slash
+        project_root_index = len(os.path.abspath(project_root_dir)) + 1  # Remove the first slash
 
     # Parse the contents of all the source files
     source_code = OrderedDict()
@@ -133,11 +139,11 @@ def main():
 
         short_source_file_path = source_file[project_root_index:]
         conditional_print("\n\n\n" + CliColors.HEADER +
-              "Code duplication probability for " + short_source_file_path + CliColors.ENDC, args.json)
-        conditional_print("-" * (largest_string_length + similarity_label_length), args.json)
+              "Code duplication probability for " + short_source_file_path + CliColors.ENDC, json_output)
+        conditional_print("-" * (largest_string_length + similarity_label_length), json_output)
         conditional_print(CliColors.BOLD + "%s %s" %
-              (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC, args.json)
-        conditional_print("-" * (largest_string_length + similarity_label_length), args.json)
+              (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC, json_output)
+        conditional_print("-" * (largest_string_length + similarity_label_length), json_output)
 
         code_similarity[short_source_file_path] = dict()
         for similarity, source in zip(sims[query_doc_tf_idf], source_code):
@@ -146,19 +152,19 @@ def main():
                 continue
             similarity_percentage = similarity * 100
             # Ignore very low similarity
-            if similarity_percentage < args.ignore_threshold:
+            if similarity_percentage < ignore_threshold:
                 continue
             short_source_path = source[project_root_index:]
             code_similarity[short_source_file_path][short_source_path] = round(similarity_percentage, 2)
-            if similarity_percentage > args.fail_threshold:
+            if similarity_percentage > fail_threshold:
                 exit_code = 1
             color = CliColors.OKGREEN if similarity_percentage < 10 else (
                 CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
             conditional_print("%s     " % (short_source_path.ljust(largest_string_length)) +
-                  color + "%.2f" % (similarity_percentage) + CliColors.ENDC, args.json)
+                  color + "%.2f" % (similarity_percentage) + CliColors.ENDC, json_output)
     if exit_code == 1: 
-        conditional_print("Code duplication threshold exceeded. Please consult logs.", args.json)
-    if args.json:
+        conditional_print("Code duplication threshold exceeded. Please consult logs.", json_output)
+    if json_output:
         similarities_json = json.dumps(code_similarity, indent=4)
         print(similarities_json)
     exit(exit_code)
