@@ -71,9 +71,11 @@ def main():
         help="Don't print out similarity below the ignore threshold")
     args = parser.parse_args()
 
-    run(args.fail_threshold, args.directories, args.files, args.ignore_directories,
-        args.ignore_files, args.json, args.project_root_dir, args.file_extensions,
-        args.ignore_threshold)
+    result = run(args.fail_threshold, args.directories, args.files, args.ignore_directories,
+                args.ignore_files, args.json, args.project_root_dir, args.file_extensions,
+                args.ignore_threshold)
+
+    return result
 
 def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         json_output, project_root_dir, file_extensions, ignore_threshold):
@@ -84,32 +86,32 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         for directory in directories:
             if not os.path.isdir(directory):
                 print("Path does not exist or is not a directory:", directory)
-                sys.exit(1)
+                return (1, {})
             source_code_files += get_all_source_code_from_directory(directory, file_extensions)
         for directory in ignore_directories:
             files_to_ignore += get_all_source_code_from_directory(directory, file_extensions)
     else:
         if len(files) < 2:
             print("Too few files to compare, you need to supply at least 2")
-            sys.exit(1)
+            return (1, {})
         for supplied_file in files:
             if not os.path.isfile(supplied_file):
                 print("Supplied file does not exist:", supplied_file)
-                sys.exit(1)
+                return (1, {})
         source_code_files = files
 
     files_to_ignore += ignore_files if ignore_files else list()
     source_code_files = list(set(source_code_files) - set(files_to_ignore))
     if len(source_code_files) < 2:
         print("Not enough source code files found")
-        sys.exit(1)
+        return (1, {})
 
     # Get the project root directory path to remove when printing out the results
     project_root_index = 0
     if project_root_dir:
         if not os.path.isdir(project_root_dir):
             print("The project root directory does not exist or is not a directory:", project_root_dir)
-            sys.exit(1)
+            return (1, {})
         project_root_index = len(os.path.abspath(project_root_dir)) + 1  # Remove the first slash
 
     # Parse the contents of all the source files
@@ -167,7 +169,9 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
     if json_output:
         similarities_json = json.dumps(code_similarity, indent=4)
         print(similarities_json)
-    exit(exit_code)
+
+    return (exit_code, code_similarity)
 
 if __name__ == "__main__":
-    main()
+    exit_code, _ = main()
+    sys.exit(exit_code)
