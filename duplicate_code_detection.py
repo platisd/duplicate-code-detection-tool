@@ -53,7 +53,7 @@ def main():
     parser_description = CliColors.HEADER + CliColors.BOLD + \
         "=== Duplicate Code Detection Tool ===" + CliColors.ENDC
     parser = argparse.ArgumentParser(description=parser_description)
-    parser.add_argument("-t", "--threshold", type=int, default=100,
+    parser.add_argument("-t", "--fail-threshold", type=int, default=100,
                         help="The maximum allowed similarity before the script exits with an error.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-d", "--directories", nargs="+",
@@ -150,7 +150,7 @@ def main():
                 continue
             short_source_path = source[project_root_index:]
             code_similarity[short_source_file_path][short_source_path] = round(similarity_percentage, 2)
-            if similarity_percentage > args.threshold:
+            if similarity_percentage > args.fail_threshold:
                 exit_code = 1
             color = CliColors.OKGREEN if similarity_percentage < 10 else (
                 CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
