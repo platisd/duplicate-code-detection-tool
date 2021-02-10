@@ -1,0 +1,35 @@
+name: 'Duplicate code detection tool'
+description: 'Detect similarities between source code files'
+inputs:
+  github_token:
+    description: 'The GitHub token'
+    required: true
+  directories:
+    description: 'A comma-separated list of the directories containing the source code'
+    required: true
+  ignore_directories:
+    description: 'A comma-separated list of directories that should be ignored'
+    required: false
+    default: ''
+  project_root_dir:
+    description: 'The relative path to filter out when reporting results'
+    required: false
+    default: '.'
+  file_extensions:
+    description: 'A comma-separated list of source code file extensions to check for similarities'
+    required: false
+    default: 'h, hpp, c, cpp, cc, java, py, cs'
+  ignore_threshold:
+    description: 'The minimum similarity percentage to be reported'
+    required: false
+    default: 10
+  fail_threshold:
+    description: 'The maximum allowed similarity percentage before the script returns with an error'
+    required: false
+    default: 100
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+branding:
+  icon: 'check'  
+  color: 'green'
