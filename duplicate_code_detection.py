@@ -67,6 +67,8 @@ def main():
         help="The relative path to the project root directory to be removed when printing out results.")
     parser.add_argument("--file-extensions", nargs="+", default=source_code_file_extensions,
         help="File extensions to check for similarities.")
+    parser.add_argument("--ignore-threshold", type=int, default=0,
+        help="Don't print out similarity below the ignore threshold")
     args = parser.parse_args()
 
     # Determine which files to compare for similarities
@@ -143,6 +145,9 @@ def main():
             if source == source_file:
                 continue
             similarity_percentage = similarity * 100
+            # Ignore very low similarity
+            if similarity_percentage < args.ignore_threshold:
+                continue
             short_source_path = source[project_root_index:]
             code_similarity[short_source_file_path][short_source_path] = round(similarity_percentage, 2)
             if similarity_percentage > args.threshold:
