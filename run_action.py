@@ -8,6 +8,9 @@ import duplicate_code_detection
 def split_and_trim(input_list):
     return [token.strip() for token in input_list.split(',')]
 
+def to_absolute_path(paths):
+    return [os.path.abspath(path) for path in paths]
+
 def main():
     fail_threshold = os.environ.get('INPUT_FAIL_THRESHOLD')
     directories = os.environ.get('INPUT_DIRECTORIES')
@@ -18,17 +21,20 @@ def main():
     github_token = os.environ.get('INPUT_GITHUB_TOKEN')
 
     directories_list = split_and_trim(directories)
-    ignore_directories_list = split_and_trim(ignore_directories)
+    directories_list = to_absolute_path(directories_list)
+    ignore_directories_list = split_and_trim(ignore_directories) if ignore_directories != '' else list()
+    ignore_directories_list = to_absolute_path(ignore_directories_list)
     file_extensions_list = split_and_trim(file_extensions)
+    project_root_dir = os.path.abspath(project_root_dir)
 
     files_list = None
     ignore_files_list = None
     json_output = True
 
-    result, _ = duplicate_code_detection.run(fail_threshold, directories, files_list,
-                                                        ignore_directories, ignore_files_list,
-                                                        json_output, project_root_dir, file_extensions,
-                                                        ignore_threshold)
+    result, _ = duplicate_code_detection.run(int(fail_threshold), directories_list, files_list,
+                                                        ignore_directories_list, ignore_files_list,
+                                                        json_output, project_root_dir, file_extensions_list,
+                                                        int(ignore_threshold))
 
     return result
 

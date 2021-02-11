@@ -14,7 +14,7 @@ inputs:
   project_root_dir:
     description: 'The relative path to filter out when reporting results'
     required: false
-    default: '.'
+    default: './'
   file_extensions:
     description: 'A comma-separated list of source code file extensions to check for similarities'
     required: false
