@@ -10,4 +10,4 @@ eval git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
 eval git fetch --all
 eval git checkout ${GITHUB_HEAD_REF:-$(basename ${GITHUB_REF})}
 
-eval python3 run_action.py
+eval python3 /action/run.py
