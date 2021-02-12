@@ -31,7 +31,17 @@ def main():
     ignore_files_list = None
     json_output = True
 
-    result, _ = duplicate_code_detection.run(int(fail_threshold), directories_list, files_list,
+    print(os.environ.get('GITHUB_API_URL'))
+    print(os.environ.get('GITHUB_REPOSITORY'))
+    print(os.environ.get('GITHUB_REPOSITORY_OWNER'))
+    print(os.environ.get('GITHUB_EVENT_NAME'))
+    print(os.environ.get('GITHUB_EVENT_PATH'))
+    print(os.environ.get('GITHUB_REF'))
+    print(os.environ.get('GITHUB_RUN_ID'))
+
+    return 1
+
+    result, code_similarity = duplicate_code_detection.run(int(fail_threshold), directories_list, files_list,
                                                         ignore_directories_list, ignore_files_list,
                                                         json_output, project_root_dir, file_extensions_list,
                                                         int(ignore_threshold))
