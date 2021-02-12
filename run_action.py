@@ -31,6 +31,9 @@ def main():
     ignore_files_list = None
     json_output = True
 
+    print("!!!!!!!!!!!")
+    print(os.environ)
+    print("-----------")
     print(os.environ.get('GITHUB_API_URL'))
     print(os.environ.get('GITHUB_REPOSITORY'))
     print(os.environ.get('GITHUB_REPOSITORY_OWNER'))
@@ -38,6 +41,7 @@ def main():
     print(os.environ.get('GITHUB_EVENT_PATH'))
     print(os.environ.get('GITHUB_REF'))
     print(os.environ.get('GITHUB_RUN_ID'))
+    print("-----------")
 
     return 1
 
