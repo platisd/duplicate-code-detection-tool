@@ -50,7 +50,7 @@ def get_markdown_link(file, url):
 def similarities_to_markdown(similarities, url_prefix):
     markdown = str()
     for checked_file in similarities.keys():
-        markdown += "### 📂 " + get_markdown_link(checked_file, url_prefix)
+        markdown += "### 📄 " + get_markdown_link(checked_file, url_prefix)
 
         table_header = ["File", "Similarity (%)"]
         table_contents = [[get_markdown_link(f, url_prefix), s]
@@ -108,9 +108,10 @@ def main():
     files_url_prefix = 'https://github.com/%s/blob/%s/' % (
         repo, args.latest_head)
 
-    message = "## Duplicate code detection tool\n"
+    message = "## 📌 Duplicate code detection tool report\n"
     message += "The [tool](https://github.com/platisd/duplicate-code-detection-tool)"
-    message += " analyzed your source files and found the following similarities between them:\n"
+    message += " analyzed your source code and found the following degree of"
+    message += " similarity between the files:\n"
     message += similarities_to_markdown(code_similarity, files_url_prefix)
 
     event_json_file_path = os.environ.get('GITHUB_EVENT_PATH')
