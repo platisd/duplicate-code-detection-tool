@@ -54,7 +54,8 @@ def get_warning(similarity, warn_threshold):
 def similarities_to_markdown(similarities, url_prefix, warn_threshold):
     markdown = str()
     for checked_file in similarities.keys():
-        markdown += "### 📄 " + get_markdown_link(checked_file, url_prefix)
+        markdown += "<details><summary>%s</summary>\n\n" % checked_file
+        markdown += "### 📄 %s\n" % get_markdown_link(checked_file, url_prefix)
 
         table_header = ["File", "Similarity (%)"]
         table_contents = [[get_markdown_link(f, url_prefix), get_warning(s, warn_threshold)]
@@ -65,6 +66,7 @@ def similarities_to_markdown(similarities, url_prefix, warn_threshold):
             entire_table[i] = table_contents[i-1]
 
         markdown += make_markdown_table(entire_table)
+        markdown += "</details>\n"
 
     return markdown
 
