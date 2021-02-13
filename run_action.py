@@ -8,6 +8,8 @@ import argparse
 
 import duplicate_code_detection
 
+WARNING_SUFFIX = " ⚠️"
+
 
 def make_markdown_table(array):
     """ Input: Python list with rows of table as lists
@@ -48,7 +50,7 @@ def get_markdown_link(file, url):
 
 
 def get_warning(similarity, warn_threshold):
-    return str(similarity) if similarity < int(warn_threshold) else str(similarity) + " ⚠️"
+    return str(similarity) if similarity < int(warn_threshold) else str(similarity) + WARNING_SUFFIX
 
 
 def similarities_to_markdown(similarities, url_prefix, warn_threshold):
@@ -60,6 +62,9 @@ def similarities_to_markdown(similarities, url_prefix, warn_threshold):
         table_header = ["File", "Similarity (%)"]
         table_contents = [[get_markdown_link(f, url_prefix), get_warning(s, warn_threshold)]
                           for (f, s) in similarities[checked_file].items()]
+        # Sort table contents based on similarity
+        table_contents.sort(
+            reverse=True, key=lambda row: float(row[1].replace(WARNING_SUFFIX, "")))
         entire_table = [[] for _ in range(len(table_contents) + 1)]
         entire_table[0] = table_header
         for i in range(1, len(table_contents) + 1):
