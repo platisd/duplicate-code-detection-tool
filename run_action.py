@@ -82,6 +82,8 @@ def main():
         description="Duplicate code detection action runner")
     parser.add_argument("--latest-head", type=str,
                         default="master", help="The latest commit hash or branch")
+    parser.add_argument("--pull-request-id", type=str,
+                        required=True, help="The pull request id")
     args = parser.parse_args()
 
     fail_threshold = os.environ.get('INPUT_FAIL_ABOVE')
@@ -120,16 +122,10 @@ def main():
     message += similarities_to_markdown(code_similarity,
                                         files_url_prefix, warn_threshold)
 
-    event_json_file_path = os.environ.get('GITHUB_EVENT_PATH')
-    issue_number = None
-    with open(event_json_file_path) as json_file:
-        event = json.load(json_file)
-        issue_number = event['issue']['number']
-
     github_token = os.environ.get('INPUT_GITHUB_TOKEN')
     github_api_url = os.environ.get('GITHUB_API_URL')
     request_url = '%s/repos/%s/issues/%s/comments' % (
-        github_api_url, repo, str(issue_number))
+        github_api_url, repo, args.pull_request_id)
 
     post_result = requests.post(request_url, json={'body': message}, headers={
                                 'Authorization': 'token %s' % github_token})

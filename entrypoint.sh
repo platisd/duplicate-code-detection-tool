@@ -4,10 +4,13 @@ set -eu
 script_dir="$(dirname "$0")"
 cd $script_dir
 
-cat "$GITHUB_EVENT_PATH"
-
-pull_request_id=$(cat "$GITHUB_EVENT_PATH" | jq '.issue.number')
+pull_request_id=$(cat "$GITHUB_EVENT_PATH" | jq 'if (.issue.number != null) then .issue.number else .number end')
 branch_name="pull_request_branch"
+
+if [ $pull_request_id == "null" ]; then
+  echo "Could not find a pull request ID. Is this a pull request?"
+  exit 1
+fi
 
 eval git clone "https://${INPUT_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ${GITHUB_REPOSITORY}
 cd $GITHUB_REPOSITORY
@@ -17,4 +20,4 @@ eval git checkout $branch_name
 
 latest_head=$(git rev-parse HEAD)
 
-eval python3 /action/run_action.py --latest-head $latest_head
+eval python3 /action/run_action.py --latest-head $latest_head --pull-request-id $pull_request_id
