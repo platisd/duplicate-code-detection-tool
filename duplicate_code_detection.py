@@ -60,22 +60,25 @@ def main():
                        help="Check for similarities between all files of the specified directories.")
     group.add_argument('-f', "--files", nargs="+", help="Check for similarities between specified files. \
                         The more files are supplied the more accurate are the results.")
-    parser.add_argument("--ignore-directories", nargs="+", help="Directories to ignore.")
+    parser.add_argument("--ignore-directories", nargs="+",
+                        help="Directories to ignore.")
     parser.add_argument("--ignore-files", nargs="+", help="Files to ignore.")
-    parser.add_argument("-j", "--json", type=bool, default=False, help="Print output as JSON.")
+    parser.add_argument("-j", "--json", type=bool,
+                        default=False, help="Print output as JSON.")
     parser.add_argument("--project-root-dir", type=str,
-        help="The relative path to the project root directory to be removed when printing out results.")
+                        help="The relative path to the project root directory to be removed when printing out results.")
     parser.add_argument("--file-extensions", nargs="+", default=source_code_file_extensions,
-        help="File extensions to check for similarities.")
+                        help="File extensions to check for similarities.")
     parser.add_argument("--ignore-threshold", type=int, default=0,
-        help="Don't print out similarity below the ignore threshold")
+                        help="Don't print out similarity below the ignore threshold")
     args = parser.parse_args()
 
     result = run(args.fail_threshold, args.directories, args.files, args.ignore_directories,
-                args.ignore_files, args.json, args.project_root_dir, args.file_extensions,
-                args.ignore_threshold)
+                 args.ignore_files, args.json, args.project_root_dir, args.file_extensions,
+                 args.ignore_threshold)
 
     return result
+
 
 def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         json_output, project_root_dir, file_extensions, ignore_threshold):
@@ -87,9 +90,11 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
             if not os.path.isdir(directory):
                 print("Path does not exist or is not a directory:", directory)
                 return (1, {})
-            source_code_files += get_all_source_code_from_directory(directory, file_extensions)
+            source_code_files += get_all_source_code_from_directory(
+                directory, file_extensions)
         for directory in ignore_directories:
-            files_to_ignore += get_all_source_code_from_directory(directory, file_extensions)
+            files_to_ignore += get_all_source_code_from_directory(
+                directory, file_extensions)
     else:
         if len(files) < 2:
             print("Too few files to compare, you need to supply at least 2")
@@ -110,9 +115,11 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
     project_root_index = 0
     if project_root_dir:
         if not os.path.isdir(project_root_dir):
-            print("The project root directory does not exist or is not a directory:", project_root_dir)
+            print(
+                "The project root directory does not exist or is not a directory:", project_root_dir)
             return (1, {})
-        project_root_index = len(os.path.abspath(project_root_dir)) + 1  # Remove the first slash
+        project_root_index = len(os.path.abspath(
+            project_root_dir)) + 1  # Remove the first slash
 
     # Parse the contents of all the source files
     source_code = OrderedDict()
@@ -135,17 +142,20 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
     code_similarity = dict()
     for source_file in source_code:
         # Check for similarities
-        query_doc = [w.lower() for w in word_tokenize(source_code[source_file])]
+        query_doc = [w.lower()
+                     for w in word_tokenize(source_code[source_file])]
         query_doc_bow = dictionary.doc2bow(query_doc)
         query_doc_tf_idf = tf_idf[query_doc_bow]
 
         short_source_file_path = source_file[project_root_index:]
         conditional_print("\n\n\n" + CliColors.HEADER +
-              "Code duplication probability for " + short_source_file_path + CliColors.ENDC, json_output)
-        conditional_print("-" * (largest_string_length + similarity_label_length), json_output)
+                          "Code duplication probability for " + short_source_file_path + CliColors.ENDC, json_output)
+        conditional_print("-" * (largest_string_length +
+                                 similarity_label_length), json_output)
         conditional_print(CliColors.BOLD + "%s %s" %
-              (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC, json_output)
-        conditional_print("-" * (largest_string_length + similarity_label_length), json_output)
+                          (file_column_label.center(largest_string_length), similarity_column_label) + CliColors.ENDC, json_output)
+        conditional_print("-" * (largest_string_length +
+                                 similarity_label_length), json_output)
 
         code_similarity[short_source_file_path] = dict()
         for similarity, source in zip(sims[query_doc_tf_idf], source_code):
@@ -157,20 +167,23 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
             if similarity_percentage < ignore_threshold:
                 continue
             short_source_path = source[project_root_index:]
-            code_similarity[short_source_file_path][short_source_path] = round(similarity_percentage, 2)
+            code_similarity[short_source_file_path][short_source_path] = round(
+                similarity_percentage, 2)
             if similarity_percentage > fail_threshold:
                 exit_code = 1
             color = CliColors.OKGREEN if similarity_percentage < 10 else (
                 CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
             conditional_print("%s     " % (short_source_path.ljust(largest_string_length)) +
-                  color + "%.2f" % (similarity_percentage) + CliColors.ENDC, json_output)
-    if exit_code == 1: 
-        conditional_print("Code duplication threshold exceeded. Please consult logs.", json_output)
+                              color + "%.2f" % (similarity_percentage) + CliColors.ENDC, json_output)
+    if exit_code == 1:
+        conditional_print(
+            "Code duplication threshold exceeded. Please consult logs.", json_output)
     if json_output:
         similarities_json = json.dumps(code_similarity, indent=4)
         print(similarities_json)
 
     return (exit_code, code_similarity)
+
 
 if __name__ == "__main__":
     exit_code, _ = main()
