@@ -13,4 +13,6 @@ eval git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
 eval git fetch origin pull/$pull_request_id/head:$branch_name
 eval git checkout $branch_name
 
-eval python3 /action/run_action.py
+latest_head=$(git rev-parse HEAD)
+
+eval python3 /action/run_action.py --latest-head $latest_head

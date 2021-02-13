@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import requests
+import argparse
 
 import duplicate_code_detection
 
@@ -42,13 +43,17 @@ def make_markdown_table(array):
     return markdown + "\n"
 
 
-def similarities_to_markdown(similarities):
+def get_markdown_link(file, url):
+    return "[%s](%s%s)" % (file, url, file)
+
+
+def similarities_to_markdown(similarities, url_prefix):
     markdown = str()
     for checked_file in similarities.keys():
-        markdown += "### 📂 " + checked_file
+        markdown += "### 📂 " + get_markdown_link(checked_file, url_prefix)
 
         table_header = ["File", "Similarity (%)"]
-        table_contents = [[f, s]
+        table_contents = [[get_markdown_link(f, url_prefix), s]
                           for (f, s) in similarities[checked_file].items()]
         entire_table = [[] for _ in range(len(table_contents) + 1)]
         entire_table[0] = table_header
@@ -69,6 +74,12 @@ def to_absolute_path(paths):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="Duplicate code detection action runner")
+    parser.add_argument("--latest-head", type=str,
+                        default="master", help="The latest commit hash or branch")
+    args = parser.parse_args()
+
     fail_threshold = os.environ.get('INPUT_FAIL_THRESHOLD')
     directories = os.environ.get('INPUT_DIRECTORIES')
     ignore_directories = os.environ.get('INPUT_IGNORE_DIRECTORIES')
@@ -93,10 +104,14 @@ def main():
                                                                      json_output, project_root_dir, file_extensions_list,
                                                                      int(ignore_threshold))
 
+    repo = os.environ.get('GITHUB_REPOSITORY')
+    files_url_prefix = 'https://github.com/%s/blob/%s/' % (
+        repo, args.latest_head)
+
     message = "## Duplicate code detection tool\n"
     message += "The [tool](https://github.com/platisd/duplicate-code-detection-tool)"
     message += " analyzed your source files and found the following similarities between them:\n"
-    message += similarities_to_markdown(code_similarity)
+    message += similarities_to_markdown(code_similarity, files_url_prefix)
 
     event_json_file_path = os.environ.get('GITHUB_EVENT_PATH')
     issue_number = None
@@ -106,7 +121,6 @@ def main():
 
     github_token = os.environ.get('INPUT_GITHUB_TOKEN')
     github_api_url = os.environ.get('GITHUB_API_URL')
-    repo = os.environ.get('GITHUB_REPOSITORY')
     request_url = '%s/repos/%s/issues/%s/comments' % (
         github_api_url, repo, str(issue_number))
 
