@@ -10,6 +10,7 @@ import argparse
 import gensim
 import tempfile
 import json
+from enum import Enum
 from nltk.tokenize import word_tokenize
 from collections import OrderedDict
 
@@ -17,6 +18,12 @@ source_code_file_extensions = ["h", "c", "cpp", "cc", "java", "py", "cs"]
 file_column_label = "File"
 similarity_column_label = "Similarity (%)"
 similarity_label_length = len(similarity_column_label)
+
+
+class ReturnCode(Enum):
+    SUCCESS = 0
+    BAD_INPUT = 1
+    THRESHOLD_EXCEEDED = 2
 
 
 class CliColors:
@@ -89,7 +96,7 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         for directory in directories:
             if not os.path.isdir(directory):
                 print("Path does not exist or is not a directory:", directory)
-                return (1, {})
+                return (ReturnCode.BAD_INPUT, {})
             source_code_files += get_all_source_code_from_directory(
                 directory, file_extensions)
         for directory in ignore_directories:
@@ -98,25 +105,25 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
     else:
         if len(files) < 2:
             print("Too few files to compare, you need to supply at least 2")
-            return (1, {})
+            return (ReturnCode.BAD_INPUT, {})
         for supplied_file in files:
             if not os.path.isfile(supplied_file):
                 print("Supplied file does not exist:", supplied_file)
-                return (1, {})
+                return (ReturnCode.BAD_INPUT, {})
         source_code_files = files
 
     files_to_ignore += ignore_files if ignore_files else list()
     source_code_files = list(set(source_code_files) - set(files_to_ignore))
     if len(source_code_files) < 2:
         print("Not enough source code files found")
-        return (1, {})
+        return (ReturnCode.BAD_INPUT, {})
 
     # Get the absolute project root directory path to remove when printing out the results
     if project_root_dir:
         if not os.path.isdir(project_root_dir):
             print(
                 "The project root directory does not exist or is not a directory:", project_root_dir)
-            return (1, {})
+            return (ReturnCode.BAD_INPUT, {})
         project_root_dir = os.path.abspath(project_root_dir)
         project_root_dir = os.path.join(
             project_root_dir, '')  # Add the trailing slash
@@ -138,7 +145,7 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
                                           num_features=len(dictionary))
 
     largest_string_length = len(max(source_code_files, key=len))
-    exit_code = 0
+    exit_code = ReturnCode.SUCCESS
     code_similarity = dict()
     for source_file in source_code:
         # Check for similarities
@@ -170,12 +177,12 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
             code_similarity[short_source_file_path][short_source_path] = round(
                 similarity_percentage, 2)
             if similarity_percentage > fail_threshold:
-                exit_code = 1
+                exit_code = ReturnCode.THRESHOLD_EXCEEDED
             color = CliColors.OKGREEN if similarity_percentage < 10 else (
                 CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL)
             conditional_print("%s     " % (short_source_path.ljust(largest_string_length)) +
                               color + "%.2f" % (similarity_percentage) + CliColors.ENDC, json_output)
-    if exit_code == 1:
+    if exit_code == ReturnCode.THRESHOLD_EXCEEDED:
         conditional_print(
             "Code duplication threshold exceeded. Please consult logs.", json_output)
     if json_output:
@@ -187,4 +194,4 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
 
 if __name__ == "__main__":
     exit_code, _ = main()
-    sys.exit(exit_code)
+    sys.exit(exit_code.value)

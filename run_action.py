@@ -117,6 +117,13 @@ def main():
                                                                      json_output, project_root_dir, file_extensions_list,
                                                                      int(ignore_threshold))
 
+    if detection_result == duplicate_code_detection.ReturnCode.BAD_INPUT:
+        print("Action aborted due to bad user input")
+        return detection_result.value
+    elif detection_result == duplicate_code_detection.ReturnCode.THRESHOLD_EXCEEDED:
+        print(
+            "Action failed due to maximum similarity threshold exceeded, check the report")
+
     repo = os.environ.get('GITHUB_REPOSITORY')
     files_url_prefix = 'https://github.com/%s/blob/%s/' % (
         repo, args.latest_head)
@@ -142,7 +149,7 @@ def main():
               str(post_result.status_code))
         print(post_result.text)
 
-    return detection_result
+    return detection_result.value
 
 
 if __name__ == "__main__":
