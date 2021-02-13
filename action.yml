@@ -19,12 +19,16 @@ inputs:
     description: 'A comma-separated list of source code file extensions to check for similarities'
     required: false
     default: 'h, hpp, c, cpp, cc, java, py, cs'
-  ignore_threshold:
+  ignore_below:
     description: 'The minimum similarity percentage to be reported'
     required: false
     default: 10
-  fail_threshold:
-    description: 'The maximum allowed similarity percentage before the script returns with an error'
+  fail_above:
+    description: 'The maximum allowed similarity percentage before the action fails'
+    required: false
+    default: 100
+  warn_above:
+    description: 'The maximum allowed similarity percentage before the action warns'
     required: false
     default: 100
 runs:

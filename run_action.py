@@ -47,13 +47,17 @@ def get_markdown_link(file, url):
     return "[%s](%s%s)" % (file, url, file)
 
 
-def similarities_to_markdown(similarities, url_prefix):
+def get_warning(similarity, warn_threshold):
+    return str(similarity) if similarity < int(warn_threshold) else str(similarity) + " ⚠️"
+
+
+def similarities_to_markdown(similarities, url_prefix, warn_threshold):
     markdown = str()
     for checked_file in similarities.keys():
         markdown += "### 📄 " + get_markdown_link(checked_file, url_prefix)
 
         table_header = ["File", "Similarity (%)"]
-        table_contents = [[get_markdown_link(f, url_prefix), s]
+        table_contents = [[get_markdown_link(f, url_prefix), get_warning(s, warn_threshold)]
                           for (f, s) in similarities[checked_file].items()]
         entire_table = [[] for _ in range(len(table_contents) + 1)]
         entire_table[0] = table_header
@@ -80,12 +84,12 @@ def main():
                         default="master", help="The latest commit hash or branch")
     args = parser.parse_args()
 
-    fail_threshold = os.environ.get('INPUT_FAIL_THRESHOLD')
+    fail_threshold = os.environ.get('INPUT_FAIL_ABOVE')
     directories = os.environ.get('INPUT_DIRECTORIES')
     ignore_directories = os.environ.get('INPUT_IGNORE_DIRECTORIES')
     project_root_dir = os.environ.get('INPUT_PROJECT_ROOT_DIR')
     file_extensions = os.environ.get('INPUT_FILE_EXTENSIONS')
-    ignore_threshold = os.environ.get('INPUT_IGNORE_THRESHOLD')
+    ignore_threshold = os.environ.get('INPUT_IGNORE_BELOW')
 
     directories_list = split_and_trim(directories)
     directories_list = to_absolute_path(directories_list)
@@ -107,12 +111,14 @@ def main():
     repo = os.environ.get('GITHUB_REPOSITORY')
     files_url_prefix = 'https://github.com/%s/blob/%s/' % (
         repo, args.latest_head)
+    warn_threshold = os.environ.get('INPUT_WARN_ABOVE')
 
     message = "## 📌 Duplicate code detection tool report\n"
     message += "The [tool](https://github.com/platisd/duplicate-code-detection-tool)"
     message += " analyzed your source code and found the following degree of"
     message += " similarity between the files:\n"
-    message += similarities_to_markdown(code_similarity, files_url_prefix)
+    message += similarities_to_markdown(code_similarity,
+                                        files_url_prefix, warn_threshold)
 
     event_json_file_path = os.environ.get('GITHUB_EVENT_PATH')
     issue_number = None

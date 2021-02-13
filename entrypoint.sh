@@ -4,6 +4,8 @@ set -eu
 script_dir="$(dirname "$0")"
 cd $script_dir
 
+cat "$GITHUB_EVENT_PATH"
+
 pull_request_id=$(cat "$GITHUB_EVENT_PATH" | jq '.issue.number')
 branch_name="pull_request_branch"
 
