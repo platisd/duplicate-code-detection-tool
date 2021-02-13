@@ -111,15 +111,15 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         print("Not enough source code files found")
         return (1, {})
 
-    # Get the project root directory path to remove when printing out the results
-    project_root_index = 0
+    # Get the absolute project root directory path to remove when printing out the results
     if project_root_dir:
         if not os.path.isdir(project_root_dir):
             print(
                 "The project root directory does not exist or is not a directory:", project_root_dir)
             return (1, {})
-        project_root_index = len(os.path.abspath(
-            project_root_dir)) + 1  # Remove the first slash
+        project_root_dir = os.path.abspath(project_root_dir)
+        project_root_dir = os.path.join(
+            project_root_dir, '')  # Add the trailing slash
 
     # Parse the contents of all the source files
     source_code = OrderedDict()
@@ -147,7 +147,7 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         query_doc_bow = dictionary.doc2bow(query_doc)
         query_doc_tf_idf = tf_idf[query_doc_bow]
 
-        short_source_file_path = source_file[project_root_index:]
+        short_source_file_path = source_file.replace(project_root_dir, '')
         conditional_print("\n\n\n" + CliColors.HEADER +
                           "Code duplication probability for " + short_source_file_path + CliColors.ENDC, json_output)
         conditional_print("-" * (largest_string_length +
@@ -166,7 +166,7 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
             # Ignore very low similarity
             if similarity_percentage < ignore_threshold:
                 continue
-            short_source_path = source[project_root_index:]
+            short_source_path = source.replace(project_root_dir, '')
             code_similarity[short_source_file_path][short_source_path] = round(
                 similarity_percentage, 2)
             if similarity_percentage > fail_threshold:
