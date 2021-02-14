@@ -67,12 +67,12 @@ def main():
                        help="Check for similarities between all files of the specified directories.")
     group.add_argument('-f', "--files", nargs="+", help="Check for similarities between specified files. \
                         The more files are supplied the more accurate are the results.")
-    parser.add_argument("--ignore-directories", nargs="+",
+    parser.add_argument("--ignore-directories", nargs="+", default=list(),
                         help="Directories to ignore.")
     parser.add_argument("--ignore-files", nargs="+", help="Files to ignore.")
     parser.add_argument("-j", "--json", type=bool,
                         default=False, help="Print output as JSON.")
-    parser.add_argument("--project-root-dir", type=str,
+    parser.add_argument("--project-root-dir", type=str, default=str(),
                         help="The relative path to the project root directory to be removed when printing out results.")
     parser.add_argument("--file-extensions", nargs="+", default=source_code_file_extensions,
                         help="File extensions to check for similarities.")
