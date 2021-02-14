@@ -117,6 +117,7 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
     if len(source_code_files) < 2:
         print("Not enough source code files found")
         return (ReturnCode.BAD_INPUT, {})
+    source_code_files = [os.path.abspath(f) for f in source_code_files]
 
     # Get the absolute project root directory path to remove when printing out the results
     if project_root_dir:
