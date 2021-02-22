@@ -129,6 +129,9 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         project_root_dir = os.path.join(
             project_root_dir, '')  # Add the trailing slash
 
+    # Find the largest string length to format the textual output
+    largest_string_length = len(max(source_code_files, key=len).replace(project_root_dir, ""))
+
     # Parse the contents of all the source files
     source_code = OrderedDict()
     for source_code_file in source_code_files:
@@ -145,7 +148,6 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
     sims = gensim.similarities.Similarity(tempfile.gettempdir() + os.sep, tf_idf[corpus],
                                           num_features=len(dictionary))
 
-    largest_string_length = len(max(source_code_files, key=len))
     exit_code = ReturnCode.SUCCESS
     code_similarity = dict()
     for source_file in source_code:
