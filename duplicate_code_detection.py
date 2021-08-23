@@ -135,9 +135,13 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
     # Parse the contents of all the source files
     source_code = OrderedDict()
     for source_code_file in source_code_files:
-        with open(source_code_file, 'r') as f:
-            # Store source code with the file path as the key
-            source_code[source_code_file] = f.read()
+        try:
+            # read file but also recover from encoding errors in source files
+            with open(source_code_file, 'r', errors='surrogateescape') as f:
+                # Store source code with the file path as the key
+                source_code[source_code_file] = f.read()
+        except Exception as err:
+            print(f'ERROR: Failed to open file {source_code_file}, reason: {str(err)}')
 
     # Create a Similarity object of all the source code
     gen_docs = [[word.lower() for word in word_tokenize(source_code[source_file])]
