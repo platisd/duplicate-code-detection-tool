@@ -12,7 +12,8 @@ if [ $pull_request_id == "null" ]; then
   exit 1
 fi
 
-eval git clone "https://${INPUT_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ${GITHUB_REPOSITORY}
+maintainer=${GITHUB_REPOSITORY%/*}
+eval git clone "https://${maintainer}:${INPUT_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ${GITHUB_REPOSITORY}
 cd $GITHUB_REPOSITORY
 eval git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
 eval git fetch origin pull/$pull_request_id/head:$branch_name
