@@ -99,6 +99,7 @@ def main():
     project_root_dir = os.environ.get('INPUT_PROJECT_ROOT_DIR')
     file_extensions = os.environ.get('INPUT_FILE_EXTENSIONS')
     ignore_threshold = os.environ.get('INPUT_IGNORE_BELOW')
+    only_code = os.environ.get('INPUT_ONLY_CODE')
 
     directories_list = split_and_trim(directories)
     directories_list = to_absolute_path(directories_list)
@@ -115,7 +116,7 @@ def main():
     detection_result, code_similarity = duplicate_code_detection.run(int(fail_threshold), directories_list, files_list,
                                                                      ignore_directories_list, ignore_files_list,
                                                                      json_output, project_root_dir, file_extensions_list,
-                                                                     int(ignore_threshold))
+                                                                     int(ignore_threshold), bool(only_code))
 
     if detection_result == duplicate_code_detection.ReturnCode.BAD_INPUT:
         print("Action aborted due to bad user input")
