@@ -8,6 +8,9 @@ import os
 import sys
 import argparse
 import gensim
+import ast
+import astor
+import re
 import tempfile
 import json
 from enum import Enum
@@ -55,6 +58,37 @@ def conditional_print(text, machine_friendly_output):
     if not machine_friendly_output:
         print(text)
 
+def remove_comments_and_docstrings(source_code: str) -> str:
+    """Strip comments and docstrings from source code
+
+    .. seealso::
+
+        https://gist.github.com/phpdude/1ae6f19de213d66286c8183e9e3b9ec1
+
+    :param source_code: Raw source code as a single string
+    :type source_code: str
+    :return: Stripped source code as a single string
+    :rtype: str
+    """
+    parsed = ast.parse(source_code)
+    for node in ast.walk(parsed):
+        if not isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef, ast.Module)):
+            continue
+
+        if not len(node.body):
+            continue
+
+        if not isinstance(node.body[0], ast.Expr):
+            continue
+
+        if not hasattr(node.body[0], 'value') or not isinstance(node.body[0].value, ast.Str):
+            continue
+
+        node.body = node.body[1:]
+
+    source_code_clean  = astor.to_source(parsed)
+    return source_code_clean
+
 
 def main():
     parser_description = CliColors.HEADER + CliColors.BOLD + \
@@ -78,17 +112,18 @@ def main():
                         help="File extensions to check for similarities.")
     parser.add_argument("--ignore-threshold", type=int, default=0,
                         help="Don't print out similarity below the ignore threshold")
+    parser.add_argument("--only-code", action="store_true", help="Removes comments and docstrings from the source code before analysis")
     args = parser.parse_args()
 
     result = run(args.fail_threshold, args.directories, args.files, args.ignore_directories,
                  args.ignore_files, args.json, args.project_root_dir, args.file_extensions,
-                 args.ignore_threshold)
+                 args.ignore_threshold, args.only_code)
 
     return result
 
 
 def run(fail_threshold, directories, files, ignore_directories, ignore_files,
-        json_output, project_root_dir, file_extensions, ignore_threshold):
+        json_output, project_root_dir, file_extensions, ignore_threshold, only_code,):
     # Determine which files to compare for similarities
     source_code_files = list()
     files_to_ignore = list()
@@ -139,7 +174,10 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
             # read file but also recover from encoding errors in source files
             with open(source_code_file, 'r', errors='surrogateescape') as f:
                 # Store source code with the file path as the key
-                source_code[source_code_file] = f.read()
+                content = f.read()
+                if only_code:
+                    content = remove_comments_and_docstrings(content)
+                source_code[source_code_file] = content
         except Exception as err:
             print(f'ERROR: Failed to open file {source_code_file}, reason: {str(err)}')
 

@@ -31,6 +31,10 @@ inputs:
     description: 'The maximum allowed similarity percentage before the action warns'
     required: false
     default: 100
+  only_code:
+    description: "Removes comments and docstrings from the source code before analysis"
+    required: false
+    default: false
 runs:
   using: 'docker'
   image: 'Dockerfile'
