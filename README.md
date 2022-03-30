@@ -152,3 +152,7 @@ jobs:
           # Remove `src/` from the file paths when reporting similarities
           project_root_dir: "src"
 ```
+
+## Limitations
+
+- `only_code` option only works with python files for now (as per #8 and 244b200)
