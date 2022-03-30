@@ -151,6 +151,9 @@ jobs:
           warn_above: 15
           # Remove `src/` from the file paths when reporting similarities
           project_root_dir: "src"
+          # Remove docstrings from code before analysis
+          # For python source code only. This is checked on a per-file basis
+          only_code: true
 ```
 
 ## Limitations
