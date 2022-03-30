@@ -155,4 +155,4 @@ jobs:
 
 ## Limitations
 
-- `only_code` option only works with python files for now (as per #8 and 244b200)
+- `only_code` option only works with python files for now (as per #8)
