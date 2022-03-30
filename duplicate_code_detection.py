@@ -175,7 +175,7 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
             with open(source_code_file, 'r', errors='surrogateescape') as f:
                 # Store source code with the file path as the key
                 content = f.read()
-                if only_code:
+                if only_code and source_code_file.endswith('py'):
                     content = remove_comments_and_docstrings(content)
                 source_code[source_code_file] = content
         except Exception as err:
