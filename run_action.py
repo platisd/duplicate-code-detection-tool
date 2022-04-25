@@ -134,8 +134,14 @@ def main():
     message += "The [tool](https://github.com/platisd/duplicate-code-detection-tool)"
     message += " analyzed your source code and found the following degree of"
     message += " similarity between the files:\n"
-    message += similarities_to_markdown(code_similarity,
+    markdown_similarities = similarities_to_markdown(code_similarity,
                                         files_url_prefix, warn_threshold)
+    message += markdown_similarities
+    # echo "::set-output name=random-id::$(echo $RANDOM)"
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print(os.system('echo "::debug::Set the Octocat variable"'))
+    os.environ["markdown_similarities"] = markdown_similarities
+    print(os.system('echo "::set-output name=markdown::$(echo $markdown_similarities)"'))
 
     github_token = os.environ.get('INPUT_GITHUB_TOKEN')
     github_api_url = os.environ.get('GITHUB_API_URL')

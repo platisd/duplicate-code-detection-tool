@@ -1,5 +1,8 @@
 name: 'Duplicate code detection tool'
 description: 'Detect similarities between source code files'
+outputs:
+  markdown:
+    description: 'The report in markdown format'
 inputs:
   github_token:
     description: 'The GitHub token'

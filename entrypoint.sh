@@ -22,3 +22,5 @@ eval git checkout $branch_name
 latest_head=$(git rev-parse HEAD)
 
 eval python3 /action/run_action.py --latest-head $latest_head --pull-request-id $pull_request_id
+
+echo "::set-output name=markdown::strawberry"
