@@ -231,8 +231,13 @@ def run(fail_threshold, directories, files, ignore_directories, ignore_files,
         conditional_print(
             "Code duplication threshold exceeded. Please consult logs.", json_output)
     if json_output:
-        similarities_json = json.dumps(code_similarity, indent=4)
-        print(similarities_json)
+        result = {}
+        with open('result.json', mode='w+', encoding='utf-8') as file:
+            for key, v in code_similarity.items():
+                v_sort = dict(sorted(filter(lambda y: y[1] >= 50, v.items()), key=lambda x: x[1], reverse=True))
+                if v_sort:
+                    result[key] = v_sort
+            json.dump(result, file,  indent=4)
 
     return (exit_code, code_similarity)
 
