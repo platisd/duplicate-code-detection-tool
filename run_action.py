@@ -35,12 +35,20 @@ def make_markdown_table(array):
         markdown += str("-------------- | ")
     markdown += "\n"
 
+    markdown_characters = 0
+    max_characters = 65000
     for entry in array[1:]:
         markdown += str("| ")
         for e in entry:
             to_add = str(e) + str(" | ")
             markdown += to_add
         markdown += "\n"
+        markdown_characters += len(markdown)
+        if markdown_characters > max_characters:
+            markdown += "\n" + WARNING_SUFFIX + " "
+            markdown += "Results were omitted because the report was too large. "
+            markdown += "Please consider ignoring results below a certain threshold.\n"
+            break
 
     return markdown + "\n"
 
