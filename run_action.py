@@ -176,6 +176,9 @@ def main():
         args.pull_request_id,
     )
 
+    with open("message.md", "w") as f:
+        f.write(message)
+
     post_result = requests.post(
         request_url,
         json={"body": message},
