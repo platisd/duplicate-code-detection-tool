@@ -9,6 +9,7 @@ import sys
 import argparse
 import gensim
 import ast
+import csv
 import astor
 import re
 import tempfile
@@ -153,6 +154,12 @@ def main():
         action="store_true",
         help="Removes comments and docstrings from the source code before analysis",
     )
+    parser.add_argument(
+        "--csv-output",
+        type=str,
+        default=str(),
+        help="Outputs results as a CSV to the specified CSV path",
+    )
     args = parser.parse_args()
 
     result = run(
@@ -166,6 +173,7 @@ def main():
         args.file_extensions,
         args.ignore_threshold,
         args.only_code,
+        args.csv_output,
     )
 
     return result
@@ -182,6 +190,7 @@ def run(
     file_extensions,
     ignore_threshold,
     only_code,
+    csv_output,
 ):
     # Determine which files to compare for similarities
     source_code_files = list()
@@ -324,6 +333,20 @@ def run(
     if json_output:
         similarities_json = json.dumps(code_similarity, indent=4)
         print(similarities_json)
+
+    if csv_output:
+        with open(csv_output, "w") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(["File A", "File B", "Similarity"])
+            for first_file in code_similarity:
+                for second_file in code_similarity[first_file]:
+                    writer.writerow(
+                        [
+                            first_file,
+                            second_file,
+                            code_similarity[first_file][second_file],
+                        ]
+                    )
 
     return (exit_code, code_similarity)
 

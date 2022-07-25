@@ -134,6 +134,7 @@ def main():
     files_list = None
     ignore_files_list = None
     json_output = True
+    csv_output_path = ""  # No CSV output by default for now in GitHub Actions
 
     detection_result, code_similarity = duplicate_code_detection.run(
         int(fail_threshold),
@@ -146,6 +147,7 @@ def main():
         file_extensions_list,
         int(ignore_threshold),
         bool(only_code),
+        csv_output_path,
     )
 
     if detection_result == duplicate_code_detection.ReturnCode.BAD_INPUT:
