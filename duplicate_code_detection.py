@@ -326,6 +326,9 @@ def run(
                 + CliColors.ENDC,
                 json_output,
             )
+        # If no similarities found for the particular file, remove it from the report
+        if len(code_similarity[short_source_file_path]) == 0:
+            del code_similarity[short_source_file_path]
     if exit_code == ReturnCode.THRESHOLD_EXCEEDED:
         conditional_print(
             "Code duplication threshold exceeded. Please consult logs.", json_output
