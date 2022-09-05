@@ -25,6 +25,8 @@ The following Python packages have to be installed:
     * `pip3 install --user nltk`
   * gensim
     * `pip3 install --user gensim`
+  * astor
+    * `pip3 install --user astor`
   * punkt
     * `python3 -m nltk.downloader punkt`
 
