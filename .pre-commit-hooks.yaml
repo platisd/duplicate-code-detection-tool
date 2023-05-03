@@ -1,0 +1,6 @@
+-   id: duplicate-code-detection
+    name: Detect duplicate code
+    description: This hook will run duplicate code detection.
+    entry: duplicate-code-detection -f
+    language: python
+    types: [text]
