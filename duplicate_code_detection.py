@@ -218,6 +218,8 @@ def run(
         source_code_files = files
 
     files_to_ignore += ignore_files if ignore_files else list()
+    files_to_ignore = [os.path.normpath(f) for f in files_to_ignore]
+    source_code_files = [os.path.normpath(f) for f in source_code_files]
     source_code_files = list(set(source_code_files) - set(files_to_ignore))
     if len(source_code_files) < 2:
         print("Not enough source code files found")
