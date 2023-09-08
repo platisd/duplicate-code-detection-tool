@@ -135,6 +135,7 @@ def main():
     ignore_files_list = None
     json_output = True
     csv_output_path = ""  # No CSV output by default for now in GitHub Actions
+    show_loc = False
 
     detection_result, code_similarity = duplicate_code_detection.run(
         int(fail_threshold),
@@ -148,6 +149,7 @@ def main():
         int(ignore_threshold),
         bool(only_code),
         csv_output_path,
+        show_loc,
     )
 
     if detection_result == duplicate_code_detection.ReturnCode.BAD_INPUT:
