@@ -20,8 +20,11 @@ from collections import OrderedDict
 
 source_code_file_extensions = ["h", "c", "cpp", "cc", "java", "py", "cs"]
 file_column_label = "File"
+file_loc_label = ",#LoC"
 similarity_column_label = "Similarity (%)"
 similarity_label_length = len(similarity_column_label)
+loc_label = "#LoC"
+similarity_label = "similarity"
 
 
 class ReturnCode(Enum):
@@ -95,6 +98,16 @@ def remove_comments_and_docstrings(source_code: str) -> str:
     return source_code_clean
 
 
+def get_loc_count(file_path):
+    lines_count = -1
+    try:
+        with open(os.path.normpath(file_path), 'r') as the_file:
+            lines_count = len(the_file.readlines())
+    except Exception as err:
+        print(f"WARNING: Failed to get lines count for file {file_path}, reason: {str(err)}")
+    return lines_count
+
+
 def main():
     parser_description = (
         CliColors.HEADER
@@ -160,6 +173,11 @@ def main():
         default=str(),
         help="Outputs results as a CSV to the specified CSV path",
     )
+    parser.add_argument(
+        "--show-loc",
+        action="store_true",
+        help="Add file line counts, including blank lines and comments, to all outputs.",
+    )
     args = parser.parse_args()
 
     result = run(
@@ -174,6 +192,7 @@ def main():
         args.ignore_threshold,
         args.only_code,
         args.csv_output,
+        args.show_loc,
     )
 
     return result
@@ -191,6 +210,7 @@ def run(
     ignore_threshold,
     only_code,
     csv_output,
+    show_loc,
 ):
     # Determine which files to compare for similarities
     source_code_files = list()
@@ -224,6 +244,8 @@ def run(
     if len(source_code_files) < 2:
         print("Not enough source code files found")
         return (ReturnCode.BAD_INPUT, {})
+    # sort the sources, so the results are sorted too and are reproducible
+    source_code_files.sort()
     source_code_files = [os.path.abspath(f) for f in source_code_files]
 
     # Get the absolute project root directory path to remove when printing out the results
@@ -268,6 +290,11 @@ def run(
         tempfile.gettempdir() + os.sep, tf_idf[corpus], num_features=len(dictionary)
     )
 
+    column_label = file_column_label
+    if show_loc:
+        column_label += file_loc_label
+        largest_string_length += len(file_loc_label)
+
     exit_code = ReturnCode.SUCCESS
     code_similarity = dict()
     for source_file in source_code:
@@ -276,12 +303,19 @@ def run(
         query_doc_bow = dictionary.doc2bow(query_doc)
         query_doc_tf_idf = tf_idf[query_doc_bow]
 
+        loc_info = ""
+        source_file_loc = -1
+        if show_loc:
+            source_file_loc = get_loc_count(source_file)
+            loc_info = "," + str(source_file_loc)
+
         short_source_file_path = source_file.replace(project_root_dir, "")
         conditional_print(
             "\n\n\n"
             + CliColors.HEADER
             + "Code duplication probability for "
             + short_source_file_path
+            + loc_info
             + CliColors.ENDC,
             json_output,
         )
@@ -291,7 +325,7 @@ def run(
         conditional_print(
             CliColors.BOLD
             + "%s %s"
-            % (file_column_label.center(largest_string_length), similarity_column_label)
+            % (column_label.center(largest_string_length), similarity_column_label)
             + CliColors.ENDC,
             json_output,
         )
@@ -299,7 +333,11 @@ def run(
             "-" * (largest_string_length + similarity_label_length), json_output
         )
 
+        empty_length = 0
         code_similarity[short_source_file_path] = dict()
+        if show_loc:
+            code_similarity[short_source_file_path][loc_label] = source_file_loc
+            empty_length = len(code_similarity[short_source_file_path])
         for similarity, source in zip(sims[query_doc_tf_idf], source_code):
             # Ignore similarities for the same file
             if source == source_file:
@@ -309,9 +347,18 @@ def run(
             if similarity_percentage < ignore_threshold:
                 continue
             short_source_path = source.replace(project_root_dir, "")
-            code_similarity[short_source_file_path][short_source_path] = round(
-                similarity_percentage, 2
-            )
+            if show_loc:
+                code_similarity[short_source_file_path][short_source_path] = dict()
+                code_similarity[short_source_file_path][short_source_path][loc_label] = get_loc_count(
+                    source_file
+                )
+                code_similarity[short_source_file_path][short_source_path][similarity_label]  = round(
+                    similarity_percentage, 2
+                )
+            else:
+                code_similarity[short_source_file_path][short_source_path] = round(
+                    similarity_percentage, 2
+                )
             if similarity_percentage > fail_threshold:
                 exit_code = ReturnCode.THRESHOLD_EXCEEDED
             color = (
@@ -321,20 +368,25 @@ def run(
                     CliColors.WARNING if similarity_percentage < 20 else CliColors.FAIL
                 )
             )
+            info_to_print = short_source_path
+            if show_loc:
+                info_to_print += "," + str(get_loc_count(source))
+
             conditional_print(
-                "%s     " % (short_source_path.ljust(largest_string_length))
+                "%s     " % (info_to_print.ljust(largest_string_length))
                 + color
                 + "%.2f" % (similarity_percentage)
                 + CliColors.ENDC,
                 json_output,
             )
         # If no similarities found for the particular file, remove it from the report
-        if len(code_similarity[short_source_file_path]) == 0:
+        if len(code_similarity[short_source_file_path]) == empty_length:
             del code_similarity[short_source_file_path]
     if exit_code == ReturnCode.THRESHOLD_EXCEEDED:
         conditional_print(
             "Code duplication threshold exceeded. Please consult logs.", json_output
         )
+
     if json_output:
         similarities_json = json.dumps(code_similarity, indent=4)
         print(similarities_json)
@@ -342,16 +394,31 @@ def run(
     if csv_output:
         with open(csv_output, "w") as csv_file:
             writer = csv.writer(csv_file)
-            writer.writerow(["File A", "File B", "Similarity"])
-            for first_file in code_similarity:
-                for second_file in code_similarity[first_file]:
-                    writer.writerow(
-                        [
-                            first_file,
-                            second_file,
-                            code_similarity[first_file][second_file],
-                        ]
-                    )
+            if show_loc:
+                writer.writerow(["File A", "#LoC A", "File B", "#LoC B", "Similarity"])
+                for first_file in code_similarity:
+                    for second_file in code_similarity[first_file]:
+                        if second_file != loc_label:
+                            writer.writerow(
+                                [
+                                    first_file,
+                                    str(get_loc_count(os.path.join(project_root_dir, first_file))),
+                                    second_file,
+                                    str(get_loc_count(os.path.join(project_root_dir, second_file))),
+                                    code_similarity[first_file][second_file][similarity_label],
+                                ]
+                            )
+            else:
+                writer.writerow(["File A", "File B", "Similarity"])
+                for first_file in code_similarity:
+                    for second_file in code_similarity[first_file]:
+                        writer.writerow(
+                            [
+                                first_file,
+                                second_file,
+                                code_similarity[first_file][second_file],
+                            ]
+                        )
 
     return (exit_code, code_similarity)
 
