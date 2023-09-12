@@ -24,7 +24,7 @@ file_loc_label = ",#LoC"
 similarity_column_label = "Similarity (%)"
 similarity_label_length = len(similarity_column_label)
 loc_label = "#LoC"
-similarity_label = "similarity"
+similarity_label = "Similarity"
 
 
 class ReturnCode(Enum):
@@ -106,6 +106,11 @@ def get_loc_count(file_path):
     except Exception as err:
         print(f"WARNING: Failed to get lines count for file {file_path}, reason: {str(err)}")
     return lines_count
+
+
+def get_loc_to_print(loc_count):
+    loc_to_print = str(loc_count) if loc_count >= 0 else ""
+    return loc_to_print
 
 
 def main():
@@ -244,7 +249,7 @@ def run(
     if len(source_code_files) < 2:
         print("Not enough source code files found")
         return (ReturnCode.BAD_INPUT, {})
-    # sort the sources, so the results are sorted too and are reproducible
+    # Sort the sources, so the results are sorted too and are reproducible
     source_code_files.sort()
     source_code_files = [os.path.abspath(f) for f in source_code_files]
 
@@ -307,7 +312,7 @@ def run(
         source_file_loc = -1
         if show_loc:
             source_file_loc = get_loc_count(source_file)
-            loc_info = "," + str(source_file_loc)
+            loc_info = "," + get_loc_to_print(source_file_loc)
 
         short_source_file_path = source_file.replace(project_root_dir, "")
         conditional_print(
@@ -350,7 +355,7 @@ def run(
             if show_loc:
                 code_similarity[short_source_file_path][short_source_path] = dict()
                 code_similarity[short_source_file_path][short_source_path][loc_label] = get_loc_count(
-                    source_file
+                    source
                 )
                 code_similarity[short_source_file_path][short_source_path][similarity_label]  = round(
                     similarity_percentage, 2
@@ -370,7 +375,7 @@ def run(
             )
             info_to_print = short_source_path
             if show_loc:
-                info_to_print += "," + str(get_loc_count(source))
+                info_to_print += "," + get_loc_to_print(get_loc_count(source))
 
             conditional_print(
                 "%s     " % (info_to_print.ljust(largest_string_length))
@@ -399,12 +404,13 @@ def run(
                 for first_file in code_similarity:
                     for second_file in code_similarity[first_file]:
                         if second_file != loc_label:
+                            
                             writer.writerow(
                                 [
                                     first_file,
-                                    str(get_loc_count(os.path.join(project_root_dir, first_file))),
+                                    get_loc_to_print(get_loc_count(os.path.join(project_root_dir, first_file))),
                                     second_file,
-                                    str(get_loc_count(os.path.join(project_root_dir, second_file))),
+                                    get_loc_to_print(get_loc_count(os.path.join(project_root_dir, second_file))),
                                     code_similarity[first_file][second_file][similarity_label],
                                 ]
                             )
