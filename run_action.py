@@ -174,11 +174,32 @@ def main():
 
     github_token = os.environ.get("INPUT_GITHUB_TOKEN")
     github_api_url = os.environ.get("GITHUB_API_URL")
+    
     request_url = "%s/repos/%s/issues/%s/comments" % (
         github_api_url,
         repo,
         args.pull_request_id,
     )
+
+    headers = {
+        "Authorization": "token %s" % github_token,
+    }
+
+    one_comment = os.environ.get("INPUT_ONE_COMMENT")
+    if one_comment.lower() in ("true", "1"):
+        ## Search comments
+        requset_url_list_comments = requests.get(request_url,
+                                                headers=headers
+                                                ).json()
+
+        id_bot = 41898282
+        for requset_url_comment in requset_url_list_comments:
+
+            if requset_url_comment["user"]["id"] == id_bot: ## Search the bot's comment
+                ## Delete the comment
+                requests.delete(requset_url_comment["url"],
+                                headers=headers
+                                )
 
     with open("message.md", "w") as f:
         f.write(message)
@@ -186,7 +207,7 @@ def main():
     post_result = requests.post(
         request_url,
         json={"body": message},
-        headers={"Authorization": "token %s" % github_token},
+        headers=headers,
     )
 
     if post_result.status_code != 201:
