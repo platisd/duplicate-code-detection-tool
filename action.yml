@@ -4,6 +4,10 @@ inputs:
   github_token:
     description: 'The GitHub token'
     required: true
+  one_comment:
+    description: 'The last comment that should be left'
+    required: false
+    default: false
   directories:
     description: 'A comma-separated list of the directories containing the source code'
     required: true
