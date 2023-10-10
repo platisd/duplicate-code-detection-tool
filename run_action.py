@@ -175,7 +175,7 @@ def main():
 
     github_token = os.environ.get("INPUT_GITHUB_TOKEN")
     github_api_url = os.environ.get("GITHUB_API_URL")
-    
+
     request_url = "%s/repos/%s/issues/%s/comments" % (
         github_api_url,
         repo,
@@ -185,43 +185,40 @@ def main():
     headers = {
         "Authorization": "token %s" % github_token,
     }
-    report = {
-        "body": message
-    }
+    report = {"body": message}
 
-    update_existing_comment = os.environ.get("INPUT_ONE_COMMENT", "false").lower() in ("true", "1")
+    update_existing_comment = os.environ.get("INPUT_ONE_COMMENT", "false").lower() in (
+        "true",
+        "1",
+    )
     comment_updated = False
     if update_existing_comment:
-        ## Search comments
-        pr_comments = requests.get(request_url,
-                                   headers=headers
-                                   ).json()
-                                
         # If the bot has posted many comments, update the last one
+        pr_comments = requests.get(request_url, headers=headers).json()
         for pr_comment in pr_comments[::-1]:
-
-            if pr_comment["body"].startswith(header_message_start): ## Search the bot's comment
-                ## Update the previous comment
-                update_result = requests.patch(pr_comment["url"],
-                                               json=report,
-                                               headers=headers,
-                                               )           
+            if pr_comment["body"].startswith(header_message_start):
+                update_result = requests.patch(
+                    pr_comment["url"],
+                    json=report,
+                    headers=headers,
+                )
                 if update_result.status_code != 200:
                     print(
-                         "Updating existing comment failed with code: "
-                          + str(update_result.status_code)
-                          + ". Attempting to leave new comment instead."
+                        "Updating existing comment failed with code: "
+                        + str(update_result.status_code)
+                        + ". Attempting to leave new comment instead."
                     )
                     print(update_result.text)
                 else:
-                    comment_updated = True 
+                    comment_updated = True
                 break
-    
+
     if not comment_updated:
-        post_result = requests.post(request_url,
-                                    json=report,
-                                    headers=headers,
-                                    )
+        post_result = requests.post(
+            request_url,
+            json=report,
+            headers=headers,
+        )
 
         if post_result.status_code != 201:
             print(
