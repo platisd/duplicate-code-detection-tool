@@ -5,7 +5,7 @@ inputs:
     description: 'The GitHub token'
     required: true
   one_comment:
-    description: 'The last comment that should be left'
+    description: 'Duplication report will be left as a single comment, which will be updated, instead of multiple ones'
     required: false
     default: false
   directories:
