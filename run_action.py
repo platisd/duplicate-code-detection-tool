@@ -184,38 +184,48 @@ def main():
     headers = {
         "Authorization": "token %s" % github_token,
     }
+    report = {
+        "body": message
+    }
 
     one_comment = os.environ.get("INPUT_ONE_COMMENT")
     if one_comment.lower() in ("true", "1"):
         ## Search comments
-        requset_url_list_comments = requests.get(request_url,
-                                                headers=headers
-                                                ).json()
+        pr_comments = requests.get(request_url,
+                                   headers=headers
+                                   ).json()
+                                
+        header_message = "## 📌 Duplicate code detection tool report\n"
+        for pr_comment in pr_comments[::-1]:
 
-        id_bot = 41898282
-        for requset_url_comment in requset_url_list_comments:
+            if header_message in pr_comment["body"]: ## Search the bot's comment
+                ## Update the previous comment
+                update_result = requests.patch(pr_comment["url"],
+                                               json=report,
+                                               headers=headers,
+                                               )
+                if update_result.status_code != 200:
+                    print(
+                        "Updating results to GitHub failed with code: "
+                        + str(update_result.status_code)
+                    )
+                    print(update_result.text)
+                break
+    else:
+        post_result = requests.post(request_url,
+                                    json=report,
+                                    headers=headers,
+                                    )
 
-            if requset_url_comment["user"]["id"] == id_bot: ## Search the bot's comment
-                ## Delete the comment
-                requests.delete(requset_url_comment["url"],
-                                headers=headers
-                                )
+        if post_result.status_code != 201:
+            print(
+                "Posting results to GitHub failed with code: "
+                + str(post_result.status_code)
+            )
+            print(post_result.text)
 
     with open("message.md", "w") as f:
         f.write(message)
-
-    post_result = requests.post(
-        request_url,
-        json={"body": message},
-        headers=headers,
-    )
-
-    if post_result.status_code != 201:
-        print(
-            "Posting results to GitHub failed with code: "
-            + str(post_result.status_code)
-        )
-        print(post_result.text)
 
     return detection_result.value
 
