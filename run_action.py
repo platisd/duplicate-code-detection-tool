@@ -206,9 +206,9 @@ def main():
                     print(
                         "Updating existing comment failed with code: "
                         + str(update_result.status_code)
-                        + ". Attempting to leave new comment instead."
                     )
                     print(update_result.text)
+                    print("Attempting to post a new comment instead")
                 else:
                     comment_updated = True
                 break
