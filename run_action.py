@@ -211,7 +211,7 @@ def main():
                         + str(update_result.status_code)
                     )
                     print(update_result.text)
-                else
+                else:
                     is_update = True 
                 break
     
