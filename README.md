@@ -140,6 +140,8 @@ jobs:
         uses: platisd/duplicate-code-detection-tool@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Leave the report as one comment
+          one_comment: true
           directories: "src"
           # Ignore the specified directories
           ignore_directories: "src/external_libraries"
