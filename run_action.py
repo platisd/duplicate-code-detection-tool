@@ -189,6 +189,7 @@ def main():
     }
 
     one_comment = os.environ.get("INPUT_ONE_COMMENT")
+    is_update = False
     if one_comment.lower() in ("true", "1"):
         ## Search comments
         pr_comments = requests.get(request_url,
@@ -203,15 +204,18 @@ def main():
                 update_result = requests.patch(pr_comment["url"],
                                                json=report,
                                                headers=headers,
-                                               )
+                                               )           
                 if update_result.status_code != 200:
                     print(
                         "Updating results to GitHub failed with code: "
                         + str(update_result.status_code)
                     )
                     print(update_result.text)
+                else
+                    is_update = True 
                 break
-    else:
+    
+    if not is_update:
         post_result = requests.post(request_url,
                                     json=report,
                                     headers=headers,
