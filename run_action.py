@@ -164,7 +164,8 @@ def main():
     files_url_prefix = "https://github.com/%s/blob/%s/" % (repo, args.latest_head)
     warn_threshold = os.environ.get("INPUT_WARN_ABOVE")
 
-    message = "## 📌 Duplicate code detection tool report\n"
+    header_message_start = "## 📌 Duplicate code detection tool report\n"
+    message = header_message_start
     message += "The [tool](https://github.com/platisd/duplicate-code-detection-tool)"
     message += " analyzed your source code and found the following degree of"
     message += " similarity between the files:\n"
@@ -188,18 +189,17 @@ def main():
         "body": message
     }
 
-    one_comment = os.environ.get("INPUT_ONE_COMMENT")
-    is_update = False
-    if one_comment.lower() in ("true", "1"):
+    update_existing_comment = os.environ.get("INPUT_ONE_COMMENT", "false").lower() in ("true", "1")
+    comment_updated = False
+    if update_existing_comment:
         ## Search comments
         pr_comments = requests.get(request_url,
                                    headers=headers
                                    ).json()
                                 
-        header_message = "## 📌 Duplicate code detection tool report\n"
         for pr_comment in pr_comments[::-1]:
 
-            if header_message in pr_comment["body"]: ## Search the bot's comment
+            if pr_comment["body"].startswith(header_message_start): ## Search the bot's comment
                 ## Update the previous comment
                 update_result = requests.patch(pr_comment["url"],
                                                json=report,
@@ -207,15 +207,16 @@ def main():
                                                )           
                 if update_result.status_code != 200:
                     print(
-                        "Updating results to GitHub failed with code: "
-                        + str(update_result.status_code)
+                         "Updating existing comment failed with code: "
+                          + str(update_result.status_code)
+                          + ". Attempting to leave new comment instead."
                     )
                     print(update_result.text)
                 else:
-                    is_update = True 
+                    comment_updated = True 
                 break
     
-    if not is_update:
+    if not comment_updated:
         post_result = requests.post(request_url,
                                     json=report,
                                     headers=headers,
