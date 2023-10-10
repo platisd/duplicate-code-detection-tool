@@ -197,6 +197,7 @@ def main():
                                    headers=headers
                                    ).json()
                                 
+        # If the bot has posted many comments, update the last one
         for pr_comment in pr_comments[::-1]:
 
             if pr_comment["body"].startswith(header_message_start): ## Search the bot's comment
