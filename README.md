@@ -158,6 +158,8 @@ jobs:
           only_code: true
           # Leave only one comment with the report and update it for consecutive runs
           one_comment: true
+          # The message to be displayed at the start of the report
+          header_message_start: "The following files have a similarity above the threshold:"
 ```
 ## Using duplicate-code-check with pre-commit
 To use Duplicate Code Detection Tool as a pre-commit hook with [pre-commit](https://pre-commit.com/) add the following to your `.pre-commit-config.yaml` file:

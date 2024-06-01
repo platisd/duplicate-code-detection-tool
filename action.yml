@@ -39,6 +39,13 @@ inputs:
     description: 'Duplication report will be left as a single comment, which will be updated, instead of multiple ones'
     required: false
     default: false
+  header_message_start:
+    description: 'The message to be displayed at the start of the duplication report.
+                  It is used by the bot to identify previous reports and update them, so it must be unique.
+                  If you want to use the Action in multiple steps of the same workflow,
+                  then you can change this message in each step to avoid conflicts'
+    required: false
+    default: '## 📌 Duplicate code detection tool report'
 runs:
   using: 'docker'
   image: 'Dockerfile'
