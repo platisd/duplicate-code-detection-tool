@@ -1,0 +1,21 @@
+name: Duplicate code
+
+on: pull_request
+
+jobs:
+  duplicate-code-check:
+    name: Check for duplicate code
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for duplicate code
+        uses: ./
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          directories: "./"
+          # Only examine .h and .cpp files
+          file_extensions: "py"
+          ignore_below: 1
+          fail_above: 70
+          warn_above: 15
+          one_comment: true
